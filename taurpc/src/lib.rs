@@ -12,7 +12,7 @@ use tokio::sync::broadcast::Sender;
 
 pub use taurpc_macros::{ipc_type, procedures, resolvers};
 
-mod export;
+pub mod export;
 pub use export::export_types;
 
 use serde::Serialize;
