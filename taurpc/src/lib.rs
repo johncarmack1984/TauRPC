@@ -13,7 +13,7 @@ use tokio::sync::broadcast::Sender;
 pub use taurpc_macros::{ipc_type, procedures, resolvers};
 
 mod export;
-use export::export_types;
+pub use export::export_types;
 
 use serde::Serialize;
 use tauri::{AppHandle, Invoke, InvokeError, Manager, Runtime};
@@ -78,7 +78,7 @@ where
 {
     let args_map = HashMap::from([(H::PATH_PREFIX, H::args_map())]);
     let args_map = serde_json::to_string(&args_map).unwrap();
-  
+    #[cfg(debug_assertions)] // Only export in development builds
     export_types(
         H::EXPORT_PATH,
         vec![(H::PATH_PREFIX, H::TRAIT_NAME)],
@@ -197,10 +197,10 @@ impl EventTrigger {
 /// }
 /// ```
 pub struct Router {
-    handlers: HashMap<String, Sender<Arc<Invoke<tauri::Wry>>>>,
-    export_path: Option<&'static str>,
-    args_map_json: HashMap<&'static str, String>,
-    handler_paths: Vec<(&'static str, &'static str)>,
+    pub handlers: HashMap<String, Sender<Arc<Invoke<tauri::Wry>>>>,
+    pub export_path: Option<&'static str>,
+    pub args_map_json: HashMap<&'static str, String>,
+    pub handler_paths: Vec<(&'static str, &'static str)>,
 }
 
 impl Router {
@@ -244,7 +244,7 @@ impl Router {
     pub fn into_handler(self) -> impl Fn(Invoke<tauri::Wry>) {
         let args_map = serde_json::to_string(&self.args_map_json).unwrap();
 
-   
+        #[cfg(debug_assertions)] // Only export in development builds
         export_types(
             self.export_path.clone(),
             self.handler_paths.clone(),
