@@ -57,7 +57,7 @@ pub fn export_types(
     file.write_all(generate_router_type(handlers).as_bytes())
         .unwrap();
 
-    if export_path.ends_with("node_modules\\.taurpc\\index.ts") {
+    if export_path.ends_with("node_modules/.taurpc/index.ts") {
         let package_json_path = Path::new(&export_path)
             .parent()
             .and_then(|path| Some(path.join("package.json")))
