@@ -2,8 +2,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::{sync::Arc, time::Duration};
-use tauri::{AppHandle, Manager, Runtime, Window};
-use taurpc::Router;
+use tauri::{ipc::Channel, AppHandle, Manager, Runtime, WebviewWindow, Window};
+use taurpc::{Router, Windows};
 use tokio::{
     sync::{oneshot, Mutex},
     time::sleep,
@@ -22,10 +22,15 @@ struct User {
 }
 
 // create the error type that represents all errors possible in our program
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, specta::Type)]
+#[serde(tag = "type", content = "data")]
 enum Error {
     #[error(transparent)]
-    Io(#[from] std::io::Error),
+    Io(
+        #[from]
+        #[serde(skip)]
+        std::io::Error,
+    ),
 
     #[error("Other: `{0}`")]
     Other(String),
@@ -41,16 +46,25 @@ impl serde::Serialize for Error {
     }
 }
 
+#[taurpc::ipc_type]
+struct Update {
+    progress: u8,
+}
+
 // #[taurpc::procedures(event_trigger = ApiEventTrigger)]
 #[taurpc::procedures(event_trigger = ApiEventTrigger, export_to = "../src/lib/bindings.ts")]
 trait Api {
-    async fn update_state<R: Runtime>(app_handle: AppHandle<R>, new_value: String);
+    async fn update_state(app_handle: AppHandle<impl Runtime>, new_value: String);
 
     async fn get_window<R: Runtime>(window: Window<R>);
+    // async fn get_window<R: Runtime>(#[window] win: Window<R>);
+
+    async fn get_webview_window<R: Runtime>(webview_window: WebviewWindow<R>);
 
     async fn get_app_handle<R: Runtime>(app_handle: AppHandle<R>);
+    // async fn get_app_handle(#[app_handle] ah: AppHandle<impl Runtime>);
 
-    async fn test_io(user: User) -> User;
+    async fn test_io(_user: User) -> User;
 
     async fn test_option() -> Option<()>;
 
@@ -70,6 +84,8 @@ trait Api {
     async fn multiple_args(arg: Vec<String>, arg2: String);
 
     async fn test_bigint(num: i64) -> i64;
+
+    async fn with_channel(on_event: Channel<Update>);
 }
 
 #[derive(Clone)]
@@ -79,7 +95,7 @@ struct ApiImpl {
 
 #[taurpc::resolvers]
 impl Api for ApiImpl {
-    async fn update_state<R: Runtime>(self, app_handle: AppHandle<R>, new_value: String) {
+    async fn update_state(self, app_handle: AppHandle<impl Runtime>, new_value: String) {
         let mut data = self.state.lock().await;
         println!("Before {:?}", data);
         *data = new_value;
@@ -96,9 +112,16 @@ impl Api for ApiImpl {
         println!("Window: {}", window.label());
     }
 
+    async fn get_webview_window<R: Runtime>(self, webview_window: WebviewWindow<R>) {
+        println!("WebviewWindow: {}", webview_window.label());
+    }
+
     async fn get_app_handle<R: Runtime>(self, app_handle: AppHandle<R>) {
-        let app_dir = app_handle.path().app_config_dir();
-        println!("App Handle: {:?}, {:?}", app_dir, app_handle.package_info());
+        println!(
+            "App Handle: {:?}, {:?}",
+            app_handle.path().app_config_dir(),
+            app_handle.package_info()
+        );
     }
 
     async fn test_io(self, user: User) -> User {
@@ -109,7 +132,7 @@ impl Api for ApiImpl {
         Some(())
     }
 
-    async fn test_result(self, _user: User) -> Result<User, Error> {
+    async fn test_result(self, user: User) -> Result<User, Error> {
         Err(Error::Other("Some error message".to_string()))
         // Ok(user)
     }
@@ -128,6 +151,12 @@ impl Api for ApiImpl {
 
     async fn test_bigint(self, num: i64) -> i64 {
         num
+    }
+
+    async fn with_channel(self, on_event: Channel<Update>) {
+        for progress in [15, 20, 35, 50, 90] {
+            on_event.send(Update { progress }).unwrap();
+        }
     }
 }
 
@@ -206,7 +235,7 @@ async fn main() {
             specta_typescript::Typescript::default()
                 .header("// My header\n\n")
                 // Make sure prettier is installed before using this.
-                // .formatter(specta_typescript::formatter::prettier)
+                .formatter(specta_typescript::formatter::prettier)
                 .bigint(specta_typescript::BigIntExportBehavior::String),
         )
         .merge(
@@ -218,6 +247,7 @@ async fn main() {
         .merge(EventsImpl.into_handler())
         .merge(UiApiImpl.into_handler());
 
+    // Without router
     // tauri::Builder::default()
     //     .invoke_handler(router.into_handler())
     //     // .invoke_handler(taurpc::create_ipc_handler(
