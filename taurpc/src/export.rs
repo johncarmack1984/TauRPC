@@ -111,7 +111,7 @@ pub(super) fn export_types(
     // Format the output file if the user specified a formatter on `export_config`.
     if export_config.formatter.is_some() {
         match export_config.format(path) {
-            Ok(_) => println!("Bindings file formatted successfully!"),
+            Ok(_) => (),
             Err(e) => eprintln!("Error formatting bindings file: {}", e),
         }
     }
