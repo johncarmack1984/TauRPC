@@ -71,7 +71,7 @@ pub fn procedures(attrs: TokenStream, item: TokenStream) -> TokenStream {
         method_output_types: &methods
             .iter()
             .map(|IpcMethod { output, .. }| match output {
-                ReturnType::Type(_, ref ty) => ty,
+                ReturnType::Type(_, ty) => ty,
                 ReturnType::Default => unit_type,
             })
             .collect::<Vec<_>>(),

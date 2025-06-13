@@ -3,6 +3,9 @@
   "dprint.path": "node_modules/dprint/dprint",
   "typescript.preferences.importModuleSpecifierEnding": "js",
   "typescript.tsdk": "node_modules\\typescript\\lib",
+  "rust-analyzer.diagnostics.enable": false,
+  "rust-analyzer.diagnostics.experimental.enable": false,
+  "rust-analyzer.diagnostics.disabled": [],
   "rust-analyzer.linkedProjects": [
     "taurpc/Cargo.toml",
     "example/src-tauri/Cargo.toml"

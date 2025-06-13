@@ -7,8 +7,8 @@
 pub extern crate serde;
 pub extern crate specta;
 pub extern crate specta_macros;
-use specta::datatype::Function;
 use specta::TypeCollection;
+use specta::datatype::Function;
 pub use specta_typescript::Typescript;
 
 use std::{collections::HashMap, fmt::Debug, sync::Arc};
