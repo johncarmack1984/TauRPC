@@ -290,8 +290,6 @@ taurpc::Exporter::new()
     .ts_config(
         specta_typescript::Typescript::default()
             .header("// My custom header")
-            // Make sure you have the specified formatter installed on your system.
-            .formatter(specta_typescript::formatter::prettier)
     )
     .export(&router, "../src/bindings.ts")
     .unwrap();
