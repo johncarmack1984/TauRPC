@@ -44,16 +44,23 @@ impl Api for ApiImpl {
 
 #[tokio::main]
 async fn main() {
+    let api_handler = ApiImpl.into_handler();
+
+    #[cfg(debug_assertions)]
+    taurpc::Exporter::new()
+        .export(&api_handler, "../src/bindings.ts")
+        .unwrap();
+
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
-        .invoke_handler(taurpc::create_ipc_handler(ApiImpl.into_handler()))
+        .invoke_handler(taurpc::create_ipc_handler(api_handler))
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
 ```
 
-The `#[taurpc::procedures]` trait will generate everything necessary for handling calls and the type-generation. Now, you should run `pnpm tauri dev` to generate and export the TS types.
-You can specify an export path by doing this `#[taurpc::procedures(export_to = "../src/types.ts")]`. If no export path is provided, types will not be generated.
+The `#[taurpc::procedures]` trait will generate everything necessary for handling calls. To generate and export TypeScript bindings, use the `taurpc::Exporter` builder. Usually, you only want to generate bindings in debug builds, so you wrap it in `#[cfg(debug_assertions)]`.
+Once you start your application (e.g. by running `pnpm tauri dev`), the TS types will be generated at the specified path.
 
 Then on the frontend install the taurpc package.
 
@@ -61,8 +68,7 @@ Then on the frontend install the taurpc package.
 pnpm install taurpc
 ```
 
-Now on the frontend you import the generated types, if you specified the `export_to` attribute on your procedures you should import your from there.
-With these types a typesafe proxy is generated that you can use to invoke commands and listen for events.
+Now on the frontend you import the proxy creator from the generated file. With these types a typesafe proxy is generated that you can use to invoke commands and listen for events.
 
 ```typescript
 import { createTauRPCProxy } from '../bindings.ts'
@@ -71,7 +77,7 @@ const taurpc = createTauRPCProxy()
 await taurpc.hello_world()
 ```
 
-The types for taurpc are generated once you start your application, run `pnpm tauri dev`. If the types are not picked up by the LSP, you may have to restart typescript to reload the types.
+If the types are not picked up by the LSP, you may have to restart TypeScript to reload the types.
 
 You can find a complete example (using Svelte) [here](https://github.com/MatsDK/TauRPC/tree/main/example).
 
@@ -159,9 +165,11 @@ You can also find more information about this in the [Tauri guides](https://v2.t
 If you want type-safe errors on the frontend, you can opt in globally on the exporter:
 
 ```rust
-let router = taurpc::Router::new()
+#[cfg(debug_assertions)]
+taurpc::Exporter::new()
     .error_handling(taurpc::ErrorHandlingMode::Result)
-    .merge(ApiImpl.into_handler());
+    .export(&router, "../src/bindings.ts")
+    .unwrap();
 ```
 
 In this mode, procedures returning `Result<T, E>` are typed as:
@@ -182,10 +190,12 @@ const TYPED_ERROR_IMPL: &str = r#"async function typedError(result) {
   }
 }"#;
 
-let router = taurpc::Router::new()
+#[cfg(debug_assertions)]
+taurpc::Exporter::new()
     .error_handling(taurpc::ErrorHandlingMode::Result)
     .typed_error_impl(TYPED_ERROR_IMPL)
-    .merge(ApiImpl.into_handler());
+    .export(&router, "../src/bindings.ts")
+    .unwrap();
 ```
 
 # Extra options for procedures
@@ -245,6 +255,11 @@ async fn main() {
         .merge(ApiImpl.into_handler())
         .merge(EventsImpl.into_handler());
 
+    #[cfg(debug_assertions)]
+    taurpc::Exporter::new()
+        .export(&router, "../src/bindings.ts")
+        .unwrap();
+
     tauri::Builder::default()
         .invoke_handler(router.into_handler())
         .run(tauri::generate_context!())
@@ -266,19 +281,20 @@ const unlisten = await taurpc.events.event.on(() => {
 
 # Typescript export configuration
 
-You can specify a `Specta` typescript export configuration on the `Router`. These options will overwrite `Specta`'s defaults. Make sure to install the latest version of `specta_typescript`.
+You can specify a custom `specta_typescript` configuration on `taurpc::Exporter`. These options will overwrite `Specta`'s defaults. Make sure to install the latest version of `specta_typescript`.
 All available options can be found in [specta_typescript's docs](https://docs.rs/specta-typescript/latest/specta_typescript/struct.Typescript.html).
 
 ```rust
-let router = Router::new()
-    .export_config(
+#[cfg(debug_assertions)]
+taurpc::Exporter::new()
+    .ts_config(
         specta_typescript::Typescript::default()
-            .header("// My header"),
+            .header("// My custom header")
             // Make sure you have the specified formatter installed on your system.
             .formatter(specta_typescript::formatter::prettier)
     )
-    .merge(ApiImpl.into_handler())
-    .merge(EventsImpl.into_handler());
+    .export(&router, "../src/bindings.ts")
+    .unwrap();
 ```
 
 TauRPC currently exports Rust bigint-like integers (`i64`, `u64`, `i128`, `u128`, `isize`, `usize`) as TypeScript `number` values. This keeps the generated bindings simple, but values outside JavaScript's safe integer range can lose precision.

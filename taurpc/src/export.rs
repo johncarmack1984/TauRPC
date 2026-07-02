@@ -217,7 +217,7 @@ impl SpectaFormat {
     fn new(specta_phases_enabled: bool) -> Self {
         let mut remapper = Remapper::new();
 
-        // Always cast bigints to number for TauRPC
+        // Always cast bigints to number
         let number = <specta_typescript::Number as Type>::definition(&mut Types::default());
         remapper = remapper
             .rule(DataType::Primitive(Primitive::usize), number.clone())
