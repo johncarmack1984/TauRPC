@@ -1,7 +1,7 @@
 use heck::ToLowerCamelCase;
 use specta::{
     Format, Type, Types,
-    datatype::{DataType, Field, Function, NamedReferenceType, Primitive, Reference, Struct},
+    datatype::{DataType, Field, NamedReferenceType, Primitive, Reference, Struct},
 };
 use specta_serde::Phase;
 use specta_typescript::{Error, Exporter as TsExporter, FrameworkExporter, Typescript, define};

@@ -251,7 +251,7 @@ impl Events for EventsImpl {}
 
 #[tokio::main]
 async fn main() {
-    let router = Router::new()
+    let router = taurpc::Router::new()
         .merge(ApiImpl.into_handler())
         .merge(EventsImpl.into_handler());
 

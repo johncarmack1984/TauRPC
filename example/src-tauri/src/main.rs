@@ -3,7 +3,6 @@
 
 use std::{sync::Arc, time::Duration};
 use tauri::{AppHandle, EventTarget, Manager, Runtime, WebviewWindow, Window, ipc::Channel};
-use taurpc::Router;
 pub mod error_router;
 use error_router::{Error, ErrorTestingApi};
 use tokio::{
@@ -224,7 +223,7 @@ async fn main() {
         Ok::<(), tauri::Error>(())
     });
 
-    let router = Router::new()
+    let router = taurpc::Router::new()
         .merge(
             ApiImpl {
                 state: Arc::new(Mutex::new("state".to_string())),
