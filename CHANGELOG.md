@@ -8,13 +8,26 @@
 
   Breaking changes:
 
-  - Updated export behaviour, now the user is in charge of calling the exporter. Previously the types would be automatically exported in dev mode.
+  - Updated export behaviour, now the user is in charge of calling the exporter. Previously the types would be automatically exported in dev mode. Example of how to export types now:
+    ```rust
+    #[cfg(debug_assertions)]
+    taurpc::Exporter::new()
+      .export(&router, "../src/bindings.ts")
+      .unwrap();
+    ```
 
   Features:
 
-  - Typesafe error handling (#67)
+  - Typesafe error handling (#67). To enable the `Result<T, E>` types on the frontend, add the following code to your exporter:
+    ```rust
+    #[cfg(debug_assertions)]
+    taurpc::Exporter::new()
+      .error_handling(taurpc::ErrorHandlingMode::Result)
+      .export(&router, "../src/bindings.ts")
+      .unwrap();
+    ```
 
-  This version also internally upgrades to specta v2 which brought along quite some changes. The exported types for events look different now.
+  This version also internally upgrades to specta v2 (#64) which brought along quite some changes. The exported types for events look different now.
 
 ## 1.8.1
 
