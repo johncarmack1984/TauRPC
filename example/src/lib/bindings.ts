@@ -48,9 +48,9 @@ export type User = {
 	/**  The user's last name */
 	last_name: string,
 };
-const ARGS_MAP = {"":{"ev":["updated_value"],"get_app_handle":[],"get_webview_window":[],"get_window":[],"method_with_alias":[],"multiple_args":["arg","arg2"],"phase_specific_rename":["input"],"test_bigint":["num"],"test_io":["_user"],"test_option":[],"test_result":["user"],"update_state":["new_value"],"vec_test":["arg"],"with_channel":["on_event"],"with_sleep":[]},"api.ui":{"test_ev":[],"trigger":[]},"error_testing":{"test_enum_error":["fail"],"test_string_error":["fail"],"test_struct_error":["fail"],"test_thiserror_error":["fail"],"test_with_channel":["fail","on_update"]},"events":{"multiple_args":["arg1","arg2"],"state_changed":["new_state"],"test_ev":[],"vec_test":["args"]}};
+const ARGS_MAP = {"":{"ev":["updated_value"],"get_app_handle":[],"get_webview_window":[],"get_window":[],"method_with_alias":[],"multiple_args":["arg","arg2"],"phase_specific_rename":["input"],"test_bigint":["num"],"test_io":["_user"],"test_option":[],"test_result":["user"],"test_sync":["input"],"update_state":["new_value"],"vec_test":["arg"],"with_channel":["on_event"],"with_sleep":[]},"api.ui":{"test_ev":[],"trigger":[]},"error_testing":{"test_enum_error":["fail"],"test_string_error":["fail"],"test_struct_error":["fail"],"test_thiserror_error":["fail"],"test_with_channel":["fail","on_update"]},"events":{"multiple_args":["arg1","arg2"],"state_changed":["new_state"],"test_ev":[],"vec_test":["args"]}};
 
-const RESULT_MAP = {"":{"ev":false,"get_app_handle":false,"get_webview_window":false,"get_window":false,"method_with_alias":false,"multiple_args":false,"phase_specific_rename":false,"test_bigint":false,"test_io":false,"test_option":false,"test_result":true,"update_state":false,"vec_test":false,"with_channel":false,"with_sleep":false},"api.ui":{"test_ev":false,"trigger":false},"error_testing":{"test_enum_error":true,"test_string_error":true,"test_struct_error":true,"test_thiserror_error":true,"test_with_channel":true},"events":{"multiple_args":false,"state_changed":false,"test_ev":false,"vec_test":false}};
+const RESULT_MAP = {"":{"ev":false,"get_app_handle":false,"get_webview_window":false,"get_window":false,"method_with_alias":false,"multiple_args":false,"phase_specific_rename":false,"test_bigint":false,"test_io":false,"test_option":false,"test_result":true,"test_sync":false,"update_state":false,"vec_test":false,"with_channel":false,"with_sleep":false},"api.ui":{"test_ev":false,"trigger":false},"error_testing":{"test_enum_error":true,"test_string_error":true,"test_struct_error":true,"test_thiserror_error":true,"test_with_channel":true},"events":{"multiple_args":false,"state_changed":false,"test_ev":false,"vec_test":false}};
 
 export type Router = {
 	"": {
@@ -71,6 +71,8 @@ export type Router = {
 		test_option: () => Promise<null>,
 		/**  test result */
 		test_result: (user: User) => Promise<TauRpcResult<User, Error>>,
+		/**  Sync methods respond inline, without spawning on the async runtime */
+		test_sync: (input: string) => Promise<string>,
 		/**  Update the state */
 		update_state: (newValue: string) => Promise<void>,
 		vec_test: (arg: string[]) => Promise<void>,

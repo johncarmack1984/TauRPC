@@ -27,6 +27,8 @@ pub struct IpcMethod {
     pub args: Vec<Arg>,
     pub generics: Generics,
     pub attrs: MethodAttrs,
+    /// Async methods resolve on tauri's async runtime, sync methods respond inline.
+    pub is_async: bool,
     /// Span of the method signature, used for better error reporting
     pub span: Span,
 }
@@ -109,8 +111,8 @@ impl Parse for IpcMethod {
     fn parse(input: ParseStream) -> parse::Result<Self> {
         let attrs = MethodAttrs::parse(input)?;
 
-        let async_token = <Token![async]>::parse(input)?;
-        <Token![fn]>::parse(input)?;
+        let async_token: Option<Token![async]> = input.parse()?;
+        let fn_token = <Token![fn]>::parse(input)?;
 
         let ident: Ident = input.parse()?;
         let generics: Generics = input.parse()?;
@@ -136,8 +138,8 @@ impl Parse for IpcMethod {
         let output = input.parse()?;
         <Token![;]>::parse(input)?;
 
-        // Capture the span from async token (start of signature), fallback to ident span
-        let span = async_token.span;
+        // Capture the span from async token (start of signature), fallback to fn token span
+        let span = async_token.map(|token| token.span).unwrap_or(fn_token.span);
 
         Ok(IpcMethod {
             ident,
@@ -145,6 +147,7 @@ impl Parse for IpcMethod {
             args,
             generics,
             attrs,
+            is_async: async_token.is_some(),
             span,
         })
     }
