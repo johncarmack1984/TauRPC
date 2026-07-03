@@ -198,6 +198,35 @@ taurpc::Exporter::new()
     .unwrap();
 ```
 
+# Sync methods
+
+Methods are `async` by default, but you can also declare them without `async`. Sync methods respond inline instead of spawning on tauri's async runtime, the same way tauri handles non-async commands, which makes them a good fit for quick CPU-only procedures.
+
+```rust
+#[taurpc::procedures]
+trait Api {
+    fn sync_method() -> String;
+
+    async fn async_method() -> String;
+}
+
+#[derive(Clone)]
+struct ApiImpl;
+
+#[taurpc::resolvers]
+impl Api for ApiImpl {
+    fn sync_method(self) -> String {
+        "sync response".to_string()
+    }
+
+    async fn async_method(self) -> String {
+        "async response".to_string()
+    }
+}
+```
+
+On the frontend nothing changes, the generated client still returns a `Promise`. Sync methods run on the thread that receives the request, so anything slow or blocking should stay `async`, see the [Tauri guides](https://v2.tauri.app/develop/calling-rust/#async-commands) for more details.
+
 # Extra options for procedures
 
 Inside your procedures trait you can add attributes to the defined methods. This can be used to ignore or rename a method. Renaming will change the name of the procedure on the frontend.
@@ -412,7 +441,7 @@ await taurpc.update((update) => {
 - [x] Custom error handling
 - [x] Typed outputs
 - [x] Async methods - [async traits👀](https://blog.rust-lang.org/inside-rust/2023/05/03/stabilizing-async-fn-in-trait.html)
-  - [ ] Allow sync methods
+  - [x] Allow sync methods
 - [x] Calling the frontend
 - [x] Renaming event trigger struct
 - [x] Send event to specific window

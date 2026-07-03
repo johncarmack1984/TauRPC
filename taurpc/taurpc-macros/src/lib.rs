@@ -92,7 +92,8 @@ pub fn procedures(attrs: TokenStream, item: TokenStream) -> TokenStream {
     .into()
 }
 
-/// Transforms all methods to return `Pin<Box<Future<Output = ...>>>`, async traits are not supported.
+/// Transforms async methods to return `Pin<Box<Future<Output = ...>>>`, async traits are not supported.
+/// Sync methods are passed through unchanged.
 #[proc_macro_attribute]
 pub fn resolvers(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let mut item = syn::parse_macro_input!(item as ItemImpl);

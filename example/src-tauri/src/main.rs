@@ -55,6 +55,9 @@ trait Api {
     /// test result
     async fn test_result(user: User) -> Result<User, Error>;
 
+    /// Sync methods respond inline, without spawning on the async runtime
+    fn test_sync(input: String) -> String;
+
     // #[taurpc(skip)]
     async fn with_sleep();
 
@@ -124,6 +127,10 @@ impl Api for ApiImpl {
     async fn test_result(self, user: User) -> Result<User, Error> {
         Err(Error::Other("Some error message".to_string()))
         // Ok(user)
+    }
+
+    fn test_sync(self, input: String) -> String {
+        input.to_uppercase()
     }
 
     async fn with_sleep(self) {

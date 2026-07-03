@@ -69,6 +69,7 @@ impl ProceduresGenerator<'_> {
                     args,
                     generics,
                     attrs,
+                    is_async,
                     span,
                     ..
                 },
@@ -78,9 +79,18 @@ impl ProceduresGenerator<'_> {
                 if attrs.is_event {
                     return None;
                 }
+                let passthrough_attrs = &attrs.passthrough_attrs;
+
+                // sync methods don't need a future type, they return their output directly
+                if !is_async {
+                    return Some(quote_spanned! {*span=>
+                        #( #passthrough_attrs )*
+                        fn #ident #generics(self, #( #args ),*) -> #output_ty;
+                    });
+                }
+
                 let ty_doc = format!("The response future returned by [`{trait_ident}::{ident}`].");
                 let future_type_ident = method_fut_ident(ident);
-                let passthrough_attrs = &attrs.passthrough_attrs;
 
                 Some(quote_spanned! {*span=>
                     #[allow(non_camel_case_types)]
@@ -193,16 +203,24 @@ impl ProceduresGenerator<'_> {
 
         let outputs = methods
             .iter()
-            .filter_map(|IpcMethod { ident, attrs, .. }| {
-                if attrs.is_event {
-                    return None;
-                }
-                let future_ident = method_fut_ident(ident);
+            .filter_map(
+                |IpcMethod {
+                     ident,
+                     attrs,
+                     is_async,
+                     ..
+                 }| {
+                    // events don't have resolvers and sync methods don't return futures
+                    if attrs.is_event || !is_async {
+                        return None;
+                    }
+                    let future_ident = method_fut_ident(ident);
 
-                Some(quote! {
-                    #ident(<P as #trait_ident>::#future_ident)
-                })
-            })
+                    Some(quote! {
+                        #ident(<P as #trait_ident>::#future_ident)
+                    })
+                },
+            )
             .collect::<Vec<_>>();
 
         // If there are no commands, there are no future outputs and the generic P will be unused resulting in errors.
@@ -212,7 +230,11 @@ impl ProceduresGenerator<'_> {
 
         let method_idents = methods
             .iter()
-            .filter(|IpcMethod { attrs, .. }| !attrs.is_event)
+            .filter(
+                |IpcMethod {
+                     attrs, is_async, ..
+                 }| !attrs.is_event && *is_async,
+            )
             .map(|IpcMethod { ident, .. }| ident);
 
         quote! {
@@ -265,6 +287,7 @@ impl ProceduresGenerator<'_> {
                     ident,
                     args,
                     attrs,
+                    is_async,
                     span,
                     ..
                 },
@@ -276,6 +299,16 @@ impl ProceduresGenerator<'_> {
                 let method_call = quote_spanned!(*span=> #trait_ident::#ident(
                     self.methods, #( #args.unwrap() ),*
                 ));
+
+                // sync methods respond inline without going through the async runtime,
+                // the same way tauri handles non-async commands
+                if !is_async {
+                    return Some(quote! { stringify!(#proc_name) => {
+                        let res = #method_call;
+                        let kind = (&res).blocking_kind();
+                        kind.block(res, #resolver);
+                    }});
+                }
 
                 Some(quote! { stringify!(#proc_name) => {
                     #resolver.respond_async_serialized(async move {
