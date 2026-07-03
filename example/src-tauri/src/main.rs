@@ -246,20 +246,22 @@ async fn main() {
     //     state: Arc::new(Mutex::new("state".to_string())),
     // }
     // .into_handler();
-    //
+
     // #[cfg(debug_assertions)]
     // taurpc::Exporter::new()
     //     .export(&handler, "../src/lib/bindings.ts")
     //     .unwrap();
-    //
+
     // tauri::Builder::default()
-    //     .invoke_handler(handler)
+    //     .plugin(tauri_plugin_shell::init())
+    //     .invoke_handler(taurpc::create_ipc_handler(handler))
     //     .setup(|app| {
     //         tx.send(app.handle().clone()).unwrap();
     //         Ok(())
     //     })
     //     .run(tauri::generate_context!())
     //     .expect("error while running tauri application");
+
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(router.into_handler())

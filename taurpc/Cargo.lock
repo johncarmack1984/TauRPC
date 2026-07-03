@@ -3232,7 +3232,7 @@ dependencies = [
 
 [[package]]
 name = "taurpc"
-version = "0.8.1"
+version = "0.8.2"
 dependencies = [
  "heck 0.5.0",
  "itertools",
@@ -3249,7 +3249,7 @@ dependencies = [
 
 [[package]]
 name = "taurpc-macros"
-version = "0.8.1"
+version = "0.8.2"
 dependencies = [
  "proc-macro2",
  "quote",

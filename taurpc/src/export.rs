@@ -33,7 +33,7 @@ export type { InferCommandOutput, TauRpcResult }
 pub type ExportError = Error;
 
 /// A trait implemented by types that can generate TypeScript bindings
-pub trait Exportable<R: tauri::Runtime> {
+pub trait Exportable {
     fn generate_types(
         &self,
     ) -> (
@@ -118,9 +118,9 @@ impl Exporter {
     }
 
     /// Exports the generated TypeScript bindings to the specified file path.
-    pub fn export<R: tauri::Runtime>(
+    pub fn export(
         self,
-        exportable: &impl Exportable<R>,
+        exportable: &impl Exportable,
         path: impl AsRef<std::path::Path>,
     ) -> Result<(), Error> {
         let (types, functions, args_map) = exportable.generate_types();
@@ -470,7 +470,7 @@ fn generate_args_map(
     Ok(parsed_args_map)
 }
 
-impl<R: tauri::Runtime> Exportable<R> for crate::Router<R> {
+impl<R: tauri::Runtime> Exportable for crate::Router<R> {
     fn generate_types(
         &self,
     ) -> (

@@ -369,11 +369,11 @@ impl ProceduresGenerator<'_> {
                 }
             }
 
-            impl<R: ::tauri::Runtime, P: #trait_ident + Clone + Send + 'static> taurpc::Exportable<R> for #handler_ident<P> {
+            impl<P: #trait_ident + Clone + Send + 'static> taurpc::Exportable for #handler_ident<P> {
                 fn generate_types(&self) -> (specta::Types, std::collections::BTreeMap<String, Vec<taurpc::TauRpcFunction>>, std::collections::BTreeMap<String, String>) {
                     let mut types = specta::Types::default();
-                    let fns_map = std::collections::BTreeMap::from([(<Self as taurpc::TauRpcHandler<R>>::PATH_PREFIX.to_string(), <Self as taurpc::TauRpcHandler<R>>::collect_fn_types(&mut types))]);
-                    let args_map_json = std::collections::BTreeMap::from([(<Self as taurpc::TauRpcHandler<R>>::PATH_PREFIX.to_string(), <Self as taurpc::TauRpcHandler<R>>::args_map())]);
+                    let fns_map = std::collections::BTreeMap::from([(<Self as taurpc::TauRpcHandler<::tauri::Wry>>::PATH_PREFIX.to_string(), <Self as taurpc::TauRpcHandler<::tauri::Wry>>::collect_fn_types(&mut types))]);
+                    let args_map_json = std::collections::BTreeMap::from([(<Self as taurpc::TauRpcHandler<::tauri::Wry>>::PATH_PREFIX.to_string(), <Self as taurpc::TauRpcHandler<::tauri::Wry>>::args_map())]);
                     (types, fns_map, args_map_json)
                 }
             }

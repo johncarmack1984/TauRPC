@@ -15,7 +15,7 @@ First, add the following crates to your `Cargo.toml`:
 # src-tauri/Cargo.toml
 
 [dependencies]
-taurpc = "0.8.0"
+taurpc = "0.8.2"
 
 specta = { version = "=2.0.0-rc.25", features = ["derive"] }
 # specta-typescript = "0.0.12"
